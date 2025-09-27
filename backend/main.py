@@ -4,9 +4,9 @@ from google.oauth2.service_account import Credentials
 from flask import Flask, jsonify, send_from_directory
 import os
 import re
+import json
 
 
-SERVICE_ACCOUNT_FILE = 'backend/service-account.json'
 SPREADSHEET_ID = '1OO7gDKXv4YJiDfpfrIHaXIa_XUgDhl3rG2FQImQ-ixY' 
 SHEET_NAME = 'Sessões de Cadastros' 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -40,10 +40,8 @@ def validar_e_formatar_cpf(cpf):
 
 def validar_e_formatar_telefone(numero):
     num_str = str(numero)
-   
     num_limpo = re.sub(r'\D', '', num_str)
 
-    
     if len(num_limpo) != 13 or not num_limpo.startswith('55') or num_limpo[4] != '9':
         return "Telefone Inválido"
 
@@ -54,13 +52,25 @@ def validar_e_formatar_telefone(numero):
     
     return f"+{codigo_pais} ({ddd}) 9{primeira_parte}-{segunda_parte}"
 
-
 app = Flask(__name__, static_folder='../frontend', static_url_path='/')
 
 def get_data_from_sheet():
-    
     try:
-        creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+       
+        gcp_credentials_str = os.environ.get('GCP_CREDENTIALS')
+
+        
+        if not gcp_credentials_str:
+            print("ERRO: Variável de ambiente GCP_CREDENTIALS não encontrada.")
+            return None
+        
+      
+        gcp_credentials_dict = json.loads(gcp_credentials_str)
+        
+      
+        creds = Credentials.from_service_account_info(gcp_credentials_dict, scopes=SCOPES)
+        
+
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
         
@@ -69,7 +79,6 @@ def get_data_from_sheet():
 
         df.dropna(how='all', inplace=True)
 
-        
         if 'timestamp' in df.columns:
             df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M:%S')
 
@@ -85,7 +94,6 @@ def get_data_from_sheet():
     except Exception as e:
         print(f"ERRO ao buscar dados da planilha: {e}")
         return None
-
 
 @app.route('/api/data')
 def get_data():
