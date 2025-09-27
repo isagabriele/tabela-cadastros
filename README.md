@@ -54,10 +54,10 @@ Este projeto foi desenvolvido para consumir dados de uma Planilha Google e exibi
 
 ```bash
 # 1. Clone o repositório
-git clone [https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git](https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git)
+git clone https://github.com/isagabriele/tabela-cadastros.git
 
 # 2. Navegue até a pasta do projeto
-cd SEU-REPOSITORIO
+cd tabela-cadastros
 
 # 3. Crie e ative um ambiente virtual
 python -m venv venv
